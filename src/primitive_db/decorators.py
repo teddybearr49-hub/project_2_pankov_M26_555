@@ -1,9 +1,15 @@
+"""Декораторы и замыкание для кэширования."""
+
 import time
 from functools import wraps
 
+import prompt
+
+from primitive_db.constants import CONFIRM_YES
+
 
 def handle_db_errors(func):
-    """Централизованная обработка ошибок БД."""
+    """Централизованная обработка ошибок БД. При ошибке возвращает None."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -20,6 +26,7 @@ def handle_db_errors(func):
             print(f"Ошибка валидации: {e}")
         except Exception as e:
             print(f"Произошла непредвиденная ошибка: {e}")
+        return None
 
     return wrapper
 
@@ -30,10 +37,10 @@ def confirm_action(action_name):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            answer = input(
+            answer = prompt.string(
                 f'Вы уверены, что хотите выполнить "{action_name}"? [y/n]: '
-            ).strip().lower()
-            if answer != "y":
+            )
+            if answer.strip().lower() != CONFIRM_YES:
                 print("Операция отменена.")
                 return None
             return func(*args, **kwargs)
@@ -44,7 +51,7 @@ def confirm_action(action_name):
 
 
 def log_time(func):
-    """Замеряет время выполнения функции."""
+    """Замеряет и печатает время выполнения функции."""
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -62,11 +69,17 @@ def create_cacher():
     cache = {}
 
     def cache_result(key, value_func):
+        """Возвращает значение из кэша или вычисляет и сохраняет его."""
         if key in cache:
             return cache[key]
         result = value_func()
-        cache[key] = result
+        if result is not None:  # ошибки не кэшируем
+            cache[key] = result
         return result
 
-    cache_result.clear = lambda: cache.clear()
+    def clear():
+        """Сбрасывает кэш (после изменения данных)."""
+        cache.clear()
+
+    cache_result.clear = clear
     return cache_result

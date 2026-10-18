@@ -30,7 +30,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "prettytable", specifier = ">=3.18.0" },
+    { name = "prettytable", specifier = ">=3.10" },
     { name = "prompt", specifier = ">=0.4.1" },
 ]
 

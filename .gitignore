@@ -1,26 +1,8 @@
-# Virtual environment
-.venv/
-
-# Build artifacts
+.venv
 dist/
-build/
-*.egg-info/
-
-# Python cache
 __pycache__/
-*.py[cod]
-
-# Ruff cache
+*.egg-info
 .ruff_cache/
-
-# Local database files
 db_meta.json
 data/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
+*.cast
