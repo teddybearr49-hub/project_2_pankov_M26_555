@@ -1,12 +1,11 @@
 import os
 
+from primitive_db.constants import DATA_DIR, VALID_TYPES
 from primitive_db.decorators import (
     confirm_action,
     handle_db_errors,
     log_time,
 )
-
-VALID_TYPES = {"int", "str", "bool"}
 
 
 @handle_db_errors
@@ -48,7 +47,7 @@ def drop_table(metadata, table_name):
         return None
 
     del metadata[table_name]
-    data_file = os.path.join("data", f"{table_name}.json")
+    data_file = os.path.join(DATA_DIR, f"{table_name}.json")
     if os.path.exists(data_file):
         os.remove(data_file)
     print(f'Таблица "{table_name}" успешно удалена.')
