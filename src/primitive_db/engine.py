@@ -3,6 +3,7 @@ import shlex
 from prettytable import PrettyTable
 
 from primitive_db import core
+from primitive_db.decorators import create_cacher
 from primitive_db.parser import parse_set, parse_where
 from primitive_db.utils import (
     load_metadata,
@@ -71,6 +72,8 @@ def run():
     print("\n***База данных***")
     print_help()
 
+    cache_result = create_cacher()
+
     while True:
         try:
             user_input = input(">>>Введите команду: ").strip()
@@ -116,6 +119,7 @@ def run():
             new_meta = core.drop_table(metadata, args[1])
             if new_meta is not None:
                 save_metadata(DB_FILE, new_meta)
+                cache_result.clear()
             continue
 
         if command == "list_tables":
@@ -157,6 +161,7 @@ def run():
             table_data, _new_id = core.insert(metadata, table_name, values)
             if table_data is not None:
                 save_table_data(table_name, table_data)
+                cache_result.clear()
             continue
 
         # ---------- select ----------
@@ -179,8 +184,12 @@ def run():
                     print("Некорректное значение: неверное условие where.")
                     continue
             table_data = load_table_data(table_name)
-            rows = core.select(table_data, where)
-            print_table(rows, metadata[table_name])
+
+            key = (table_name, tuple(sorted(where.items())) if where else None)
+            rows = cache_result(key, lambda: core.select(table_data, where))
+
+            if rows is not None:
+                print_table(rows, metadata[table_name])
             continue
 
         # ---------- update ----------
@@ -206,6 +215,7 @@ def run():
             new_data, count, ids = core.update(table_data, set_clause, where)
             if count:
                 save_table_data(table_name, new_data)
+                cache_result.clear()
                 for i in ids:
                     print(
                         f'Запись с ID={i} в таблице "{table_name}" успешно обновлена.'
@@ -214,12 +224,11 @@ def run():
                 print("Записи не найдены.")
             continue
 
-
         # ---------- delete ----------
         if command == "delete":
             # delete from <table> where <col> = <val>
             if (
-                len(args) < 7
+                len(args) != 7
                 or args[1].lower() != "from"
                 or args[3].lower() != "where"
             ):
@@ -234,9 +243,13 @@ def run():
                 print("Некорректное значение: неверное условие where.")
                 continue
             table_data = load_table_data(table_name)
-            new_data, count, ids = core.delete(table_data, where)
+            result = core.delete(table_data, where)
+            if result is None:
+                continue
+            new_data, count, ids = result
             if count:
                 save_table_data(table_name, new_data)
+                cache_result.clear()
                 for i in ids:
                     print(
                         f'Запись с ID={i} успешно удалена из таблицы "{table_name}".'

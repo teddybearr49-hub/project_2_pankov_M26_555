@@ -1,8 +1,15 @@
 import os
 
+from primitive_db.decorators import (
+    confirm_action,
+    handle_db_errors,
+    log_time,
+)
+
 VALID_TYPES = {"int", "str", "bool"}
 
 
+@handle_db_errors
 def create_table(metadata, table_name, columns):
     """Создаёт таблицу в метаданных."""
     if table_name in metadata:
@@ -32,6 +39,8 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
+@handle_db_errors
+@confirm_action("удаление таблицы")
 def drop_table(metadata, table_name):
     """Удаляет таблицу из метаданных и её файл данных."""
     if table_name not in metadata:
@@ -68,6 +77,8 @@ def _cast_value(value, col_type):
         return False, None
 
 
+@handle_db_errors
+@log_time
 def insert(metadata, table_name, values):
     """Добавляет запись. Возвращает (table_data, new_id) или (None, None)."""
     if table_name not in metadata:
@@ -98,6 +109,8 @@ def insert(metadata, table_name, values):
     return table_data, new_id
 
 
+@handle_db_errors
+@log_time
 def select(table_data, where_clause=None):
     """Возвращает список записей, подходящих под условие."""
     if not where_clause:
@@ -109,6 +122,7 @@ def select(table_data, where_clause=None):
     return result
 
 
+@handle_db_errors
 def update(table_data, set_clause, where_clause):
     """Обновляет записи. Возвращает (updated_data, count, updated_ids)."""
     count = 0
@@ -121,6 +135,8 @@ def update(table_data, set_clause, where_clause):
     return table_data, count, updated_ids
 
 
+@handle_db_errors
+@confirm_action("удаление записи")
 def delete(table_data, where_clause):
     """Удаляет записи. Возвращает (new_data, count, deleted_ids)."""
     kept = []
