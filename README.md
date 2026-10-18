@@ -50,3 +50,7 @@ delete from users where ID = 1
 insert into users values ("Sergei", 28)
 Функция insert выполнилась за 0.001 секунд.
 Запись с ID=1 успешно добавлена в таблицу "users".
+
+
+Работа декораторов:
+https://asciinema.org/a/aJbEYp5owoQNGgSo
